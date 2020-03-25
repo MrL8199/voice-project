@@ -172,7 +172,6 @@ class RecAUD:
             self.frames.append(data)
             self.main.update()
         stream.close()
-        self.p.terminate()
         # get topic name
         topic_name = self.topic_var.get()
         # open wav file
