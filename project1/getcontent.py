@@ -16,6 +16,8 @@ for url in urls:
     sentences = sent_tokenize(article.text)
     # ghi các câu này thành dữ liệu
     f = open(directory_save + "/" +"data.txt","w",encoding='utf-8')
+    # ghi url vào dòng đầu
+    f.write(url)
     for sentence in sentences:
         f.write(sentence+ "\n")
     f.close()

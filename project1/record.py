@@ -13,6 +13,7 @@ class RecAUD:
         self.sentences = []
         self.audio_name = None
         self.file_output = None
+        self.url = None
         self.cur_sentence = -1
         self.main = tk.Tk()
         self.collections = []
@@ -87,7 +88,8 @@ class RecAUD:
         topic_name = self.topic_var.get()
         # read file
         fin = open("/".join(["data",topic_name ,"data.txt"]), "r", encoding="utf-8")
-
+        # đọc url ở dòng đầu
+        self.url = fin.readline()
         self.sentences = fin.readlines()
 
         # khởi tạo array ghi lại trạng thái câu đã được gh âm?
@@ -110,6 +112,8 @@ class RecAUD:
         if self.cur_sentence >= len(self.sentences) - 1:
             if self.file_output.closed:
                 return
+            # ghi url ở dòng đầu tiên
+            self.file_output.write(self.url)
             # duyệt tất cả các câu
             for sentence in self.sentences:
                 # lấy index câu
