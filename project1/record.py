@@ -101,8 +101,12 @@ class RecAUD:
         # nếu đang mở file output thì đóng file
         if self.file_output:
             self.file_output.close()
+        # check output folder đã tồn tại hay chưa, chưa có thì tạo mới
+        output_folder = "/".join(["output",topic_name])
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder,exist_ok=True)
         # mở file output
-        self.file_output = open("/".join(["data",topic_name ,"output.txt"]), "w" , encoding="utf-8")
+        self.file_output = open("/".join(["output",topic_name ,"output.txt"]), "w" , encoding="utf-8")
         self.status_label['text'] = 'Đã chọn chủ đề ' + topic_name + ', bấm câu sau để bắt đầu ghi âm chủ đề này'
     
     def nextSentence(self):
@@ -134,7 +138,7 @@ class RecAUD:
         # chuyển sang câu tiếp theo
         self.is_playing = False # chuyển câu thì dừng play
         self.cur_sentence += 1
-        file_path = "/".join(["data",topic_name , str(self.cur_sentence) +".wav"])
+        file_path = "/".join(["output",topic_name , str(self.cur_sentence) +".wav"])
         status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
         if os.path.exists(file_path):
             self.record_tags[self.cur_sentence] = True
@@ -150,7 +154,7 @@ class RecAUD:
             self.cur_sentence -= 1
             self.sentence_label['text']= self.sentences[self.cur_sentence]
             topic_name = self.topic_var.get()
-            file_path = "/".join(["data",topic_name , str(self.cur_sentence) +".wav"])
+            file_path = "/".join(["output",topic_name , str(self.cur_sentence) +".wav"])
             status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
             if os.path.exists(file_path):
                 self.record_tags[self.cur_sentence] = True
@@ -175,7 +179,7 @@ class RecAUD:
         # get topic name
         topic_name = self.topic_var.get()
         # open wav file
-        wf = wave.open("/".join(["data",topic_name , str(self.cur_sentence) +".wav"]), 'wb')
+        wf = wave.open("/".join(["output",topic_name , str(self.cur_sentence) +".wav"]), 'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.p.get_sample_size(self.FORMAT))
         wf.setframerate(self.RATE)
@@ -223,7 +227,7 @@ class RecAUD:
         if not self.is_playing :
             self.is_playing = True
             topic_name = self.topic_var.get()
-            filename = "/".join(["data",topic_name , str(self.cur_sentence) +".wav"])
+            filename = "/".join(["output",topic_name , str(self.cur_sentence) +".wav"])
             self.playing_theard = threading.Thread(target=self.play_audio,args=(filename,))
             self.playing_theard.start()
 
