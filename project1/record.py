@@ -17,7 +17,7 @@ class RecAUD:
         self.cur_sentence = -1
         self.main = tk.Tk()
         self.collections = []
-        self.main.geometry('1000x300')
+        self.main.geometry('800x300')
         self.main.title('Project 1 - NguyenLinhUET - MSSV: 17021195')
         self.CHUNK = chunk
         self.FORMAT = frmat
@@ -50,7 +50,7 @@ class RecAUD:
         
         # sentence label
         self.sentence_title = tk.Label(self.TopFrame, text= "Văn bản cần đọc:")
-        self.sentence_label = tk.Label(self.TopFrame, text= "(Văn bản cần đọc sẽ hiện ở đây)")
+        self.sentence_label = tk.Label(self.TopFrame, text= "(Văn bản cần đọc sẽ hiện ở đây)", wraplength=600)
         self.topicPopup.grid(row=0,column=0, padx=50, pady=5)
         self.sentence_title.grid(row=1, column = 0 , columnspan =1)
         self.sentence_label.grid(row=2, column = 0 , columnspan =1, pady=5)
@@ -139,7 +139,7 @@ class RecAUD:
         self.is_playing = False # chuyển câu thì dừng play
         self.cur_sentence += 1
         file_path = "/".join(["output",topic_name , str(self.cur_sentence) +".wav"])
-        status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
+        status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences) -1)
         if os.path.exists(file_path):
             self.record_tags[self.cur_sentence] = True
             status += " (đã ghi âm, bạn có thể nhấn nút play để nghe)"
@@ -155,7 +155,7 @@ class RecAUD:
             self.sentence_label['text']= self.sentences[self.cur_sentence]
             topic_name = self.topic_var.get()
             file_path = "/".join(["output",topic_name , str(self.cur_sentence) +".wav"])
-            status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
+            status = 'Câu thứ: ' + str(self.cur_sentence) + "/" + str(len(self.sentences) -1)
             if os.path.exists(file_path):
                 self.record_tags[self.cur_sentence] = True
                 status += " (đã ghi âm, bạn có thể nhấn nút play để nghe)"
@@ -167,7 +167,7 @@ class RecAUD:
         if self.cur_sentence == -1:
             return
         self.is_playing = False
-        self.status_label['text'] = 'Đang ghi câu: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
+        self.status_label['text'] = 'Đang ghi câu: ' + str(self.cur_sentence) + "/" + str(len(self.sentences) -1)
         self.st = 1
         self.frames = []
         stream = self.p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
@@ -191,7 +191,7 @@ class RecAUD:
             return
         self.st = 0
         self.record_tags[self.cur_sentence] = True
-        self.status_label['text'] = 'Đã ghi câu: ' + str(self.cur_sentence) + "/" + str(len(self.sentences))
+        self.status_label['text'] = 'Đã ghi câu: ' + str(self.cur_sentence) + "/" + str(len(self.sentences) -1)
     
     def play_audio(self, filename):
         chunk = 1024
