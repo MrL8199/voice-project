@@ -35,7 +35,6 @@ class RecAUD:
         self.MidFrame2 = tk.Frame(self.main)
         self.BottomFrame = tk.Frame(self.main)
 
-
         # Pack Frame
         self.TopFrame.pack()
         self.MidFrame1.pack()
@@ -92,7 +91,7 @@ class RecAUD:
         self.url = fin.readline()
         self.sentences = fin.readlines()
 
-        # khởi tạo array ghi lại trạng thái câu đã được gh âm?
+        # khởi tạo array ghi lại trạng thái câu đã được ghi âm?
         self.record_tags = [False for i in range(len(self.sentences))]
 
         
@@ -113,6 +112,7 @@ class RecAUD:
         topic_name = self.topic_var.get()
         if topic_name == 'Chọn chủ đề':
             return
+        # nếu đã ghi hết
         if self.cur_sentence >= len(self.sentences) - 1:
             if self.file_output.closed:
                 return
@@ -122,15 +122,16 @@ class RecAUD:
             for sentence in self.sentences:
                 # lấy index câu
                 index = self.sentences.index(sentence)
-                # write câu ở dòng 1
-                self.file_output.write(sentence)
                 # nếu câu đã được record thì ghi stt + .wav
                 if self.record_tags[index]:
                     audio_name = str(index) + ".wav"
                 # nếu không thì ghi NULL
                 else:
-                    audio_name = "NULL"    
+                    audio_name = "NULL"
+                # write tên file ở dòng 1, câu ở dòng 2
                 self.file_output.write(audio_name + "\n")
+                self.file_output.write(sentence)
+                
             # đóng file
             self.file_output.close()
             self.status_label['text'] = 'Đã ghi xong chủ đề ' + topic_name

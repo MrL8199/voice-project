@@ -1,6 +1,6 @@
 import framler
 import os
-from underthesea import sent_tokenize
+import re
 dt = framler.NewspapersParser("vnexpress")
 
 with open("links.txt", "r") as f:
@@ -14,7 +14,7 @@ for url in urls:
     if not os.path.exists(directory_save):
         os.makedirs(directory_save,exist_ok=True)
     # tách thành các câu
-    sentences = sent_tokenize(article.text)
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', article.text)
     # ghi các câu này thành dữ liệu
     f = open(directory_save + "/" +"data.txt","w",encoding='utf-8')
     # ghi url vào dòng đầu
