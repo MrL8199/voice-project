@@ -13,6 +13,7 @@ import threading
 class RecAUD:
     def __init__(self,chunk=3024, frmat=pyaudio.paInt16, channels=1, rate=44100, py=pyaudio.PyAudio()):
         # Start Tkinter and set Title
+        self.modelName = ["gmm_hmm.pkl","multinomial_hmm.pkl"]
         self.main = tk.Tk()
         self.collections = []
         self.main.geometry('800x300')
@@ -26,27 +27,34 @@ class RecAUD:
         self.st = 0
         self.is_playing = False
         self.playing_theard = None
-        with open("multinomial_hmm.pkl", "rb") as file:
+        self.modelPath = self.modelName[0]
+        with open(self.modelPath, "rb") as file:
             self.models = pickle.load(file)
-        self.kmeans = pickle.load(open("kmeans.pkl", 'rb'))
         
         self.stream = self.p.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
         # Set Frames
         self.TopFrame = tk.Frame(self.main)
-        self.MidFrame1 = tk.Frame(self.main)
-        self.MidFrame2 = tk.Frame(self.main)
+        self.MidFrame = tk.Frame(self.main)
         self.BottomFrame = tk.Frame(self.main)
 
         # Pack Frame
         self.TopFrame.pack()
+        self.MidFrame.pack()
         self.BottomFrame.pack()
 
+        # chọn model
+        self.model_var = tk.StringVar(self.main)
+        self.model_var.set('Chọn model')
+        self.model_var.trace('w', self.change_model)
+        self.modelPopup = tk.OptionMenu(self.TopFrame, self.model_var, *self.modelName)
+        self.modelPopup.grid(row=0,column=0, padx=50, pady=5)
+
         # Các phím record
-        self.strt_rec = tk.Button(self.TopFrame, width=10, text='Start Record', command=lambda: self.start_record())
-        self.stop_rec = tk.Button(self.TopFrame, width=10, text='Stop Record', command=lambda: self.stop_record())
-        self.play_au = tk.Button(self.TopFrame, width=10, text='Play', command=lambda: self.play_record())
-        self.stop_au = tk.Button(self.TopFrame, width=10, text="Stop", command=lambda: self.stop_play())
-        self.detect_au = tk.Button(self.TopFrame, width=10, text="Detect", command=lambda: self.detect())
+        self.strt_rec = tk.Button(self.MidFrame, width=10, text='Start Record', command=lambda: self.start_record())
+        self.stop_rec = tk.Button(self.MidFrame, width=10, text='Stop Record', command=lambda: self.stop_record())
+        self.play_au = tk.Button(self.MidFrame, width=10, text='Play', command=lambda: self.play_record())
+        self.stop_au = tk.Button(self.MidFrame, width=10, text="Stop", command=lambda: self.stop_play())
+        self.detect_au = tk.Button(self.MidFrame, width=10, text="Detect", command=lambda: self.detect())
 
         self.strt_rec.grid(row=1, column=0, pady = 5)
         self.stop_rec.grid(row=1, column=1, pady = 5)
@@ -56,7 +64,7 @@ class RecAUD:
 
         # status
         self.status_title = tk.Label(self.BottomFrame, text = "Trạng thái:")
-        self.status_label = tk.Label(self.BottomFrame, text = "")
+        self.status_label = tk.Label(self.BottomFrame, text = f"Đang sử dụng model {self.modelPath}")
         self.status_title.grid(row = 0, column = 0)
         self.status_label.grid(row = 1, column = 0)
 
@@ -84,13 +92,22 @@ class RecAUD:
         if self.is_playing == True:
             self.stop_play()
         O = self.get_mfcc("record.wav")
-        O = self.kmeans.predict(O).reshape(-1, 1)
-
+        if self.modelPath == "multinomial_hmm.pkl":
+            O = self.kmeans.predict(O).reshape(-1, 1)
         score = {cname: model.score(O, [len(O)]) for cname, model in self.models.items()}
         print(score)
         inverse = [(value, key) for key, value in score.items()]
         predict = max(inverse)[1]
         self.status_label['text'] = "Kết quả: " + predict
+    
+    def change_model(self,*args):
+        self.modelPath = self.model_var.get()
+        with open(self.modelPath, "rb") as file:
+            self.models = pickle.load(file)
+        if self.modelPath == "multinomial_hmm.pkl":
+            self.kmeans = pickle.load(open("kmeans.pkl", 'rb'))
+        self.status_label['text'] = f"Đang sử dụng model {self.modelPath}"
+
 
     def start_record(self):
         self.is_playing = False
@@ -138,6 +155,7 @@ class RecAUD:
         stream.close()
         p.terminate()
         self.is_playing = False
+        self.status_label['text'] = "Dừng phát"
 
     def stop_play(self):
         if self.is_playing:
