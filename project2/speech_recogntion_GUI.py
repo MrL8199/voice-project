@@ -101,7 +101,7 @@ class RecAUD:
             O = self.kmeans.predict(O).reshape(-1, 1)
 
         score = {cname: model.score(O, [len(O)]) for cname, model in self.models.items()}
-        print(score)
+        print(f"Result: {score}")
         inverse = [(value, key) for key, value in score.items()]
         predict = max(inverse)[1]
         self.status_label['text'] = "Kết quả: " + predict
@@ -151,8 +151,7 @@ class RecAUD:
         y_reduced_median = sp.signal.medfilt(y,3)
         y_reduced_median, time_trimmed = self.trim_silence(y_reduced_median)
         sf.write('record.wav',y_reduced_median, sr, 'PCM_24')
-        print("Duration:")
-        print("Before:", librosa.get_duration(y) , ",After:" , librosa.get_duration(y_reduced_median))
+        print(f"Remove noise: {librosa.get_duration(y)} (s) -> {librosa.get_duration(y_reduced_median)} (s)")
         self.status_label['text'] = 'Đã remove noise'
     
     def play_audio(self, filename):
