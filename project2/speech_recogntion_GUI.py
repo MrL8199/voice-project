@@ -9,6 +9,8 @@ import pyaudio
 import wave
 import os
 import threading
+import soundfile as sf
+import scipy as sp
 
 class RecAUD:
     def __init__(self,chunk=3024, frmat=pyaudio.paInt16, channels=1, rate=44100, py=pyaudio.PyAudio()):
@@ -54,13 +56,15 @@ class RecAUD:
         self.stop_rec = tk.Button(self.MidFrame, width=10, text='Stop Record', command=lambda: self.stop_record())
         self.play_au = tk.Button(self.MidFrame, width=10, text='Play', command=lambda: self.play_record())
         self.stop_au = tk.Button(self.MidFrame, width=10, text="Stop", command=lambda: self.stop_play())
+        self.rmv_noise = tk.Button(self.MidFrame, width=10, text="Rmv Noise", command=lambda: self.remove_noise())
         self.detect_au = tk.Button(self.MidFrame, width=10, text="Detect", command=lambda: self.detect())
 
         self.strt_rec.grid(row=1, column=0, pady = 5)
         self.stop_rec.grid(row=1, column=1, pady = 5)
         self.play_au.grid(row=1, column=3, pady = 5)
         self.stop_au.grid(row=1, column=4, pady = 5)
-        self.detect_au.grid(row=1, column=5, pady = 5)
+        self.rmv_noise.grid(row=1, column=5, pady = 5)
+        self.detect_au.grid(row=1, column=6, pady = 5)
 
         # status
         self.status_title = tk.Label(self.BottomFrame, text = "Trạng thái:")
@@ -76,7 +80,7 @@ class RecAUD:
         win_length = math.floor(sr*0.025)  # 25ms frame
         # mfcc is 12 x T matrix
         mfcc = librosa.feature.mfcc(
-            y, sr, n_mfcc=12, n_fft=1024,
+            y=y, sr=sr, n_mfcc=12, n_fft=1024,
             hop_length=hop_length, win_length=win_length)
         # substract mean from mfcc --> normalize mfcc
         mfcc = mfcc - np.mean(mfcc, axis=1).reshape((-1, 1))
@@ -91,9 +95,11 @@ class RecAUD:
     def detect(self):
         if self.is_playing == True:
             self.stop_play()
+        
         O = self.get_mfcc("record.wav")
         if self.modelPath == "multinomial_hmm.pkl":
             O = self.kmeans.predict(O).reshape(-1, 1)
+
         score = {cname: model.score(O, [len(O)]) for cname, model in self.models.items()}
         print(score)
         inverse = [(value, key) for key, value in score.items()]
@@ -134,12 +140,25 @@ class RecAUD:
             return
         self.st = 0
         self.status_label['text'] = 'Đã ghi âm'
+
+    def trim_silence(self,y):
+        y_trimmed, index = librosa.effects.trim(y, top_db=20, frame_length=2, hop_length=500)
+        trimmed_length = librosa.get_duration(y) - librosa.get_duration(y_trimmed)
+        return y_trimmed, trimmed_length
+
+    def remove_noise(self):
+        y,sr = librosa.load("record.wav")
+        y_reduced_median = sp.signal.medfilt(y,3)
+        y_reduced_median, time_trimmed = self.trim_silence(y_reduced_median)
+        sf.write('record.wav',y_reduced_median, sr, 'PCM_24')
+        print("Duration:")
+        print("Before:", librosa.get_duration(y) , ",After:" , librosa.get_duration(y_reduced_median))
+        self.status_label['text'] = 'Đã remove noise'
     
     def play_audio(self, filename):
         chunk = 1024
         wf = wave.open(filename, 'rb')
         p = pyaudio.PyAudio()
-
         stream = p.open(
             format = p.get_format_from_width(wf.getsampwidth()),
             channels = wf.getnchannels(),
