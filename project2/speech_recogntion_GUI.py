@@ -13,9 +13,9 @@ import soundfile as sf
 import scipy as sp
 
 class RecAUD:
-    def __init__(self,chunk=3024, frmat=pyaudio.paInt16, channels=1, rate=44100, py=pyaudio.PyAudio()):
+    def __init__(self,model_names,chunk=3024, frmat=pyaudio.paInt16, channels=1, rate=44100, py=pyaudio.PyAudio()):
         # Start Tkinter and set Title
-        self.modelName = ["gmm_hmm.pkl","multinomial_hmm.pkl"]
+        self.modelName = model_names
         self.main = tk.Tk()
         self.collections = []
         self.main.geometry('800x300')
@@ -188,5 +188,9 @@ class RecAUD:
             filename = "record.wav"
             self.playing_theard = threading.Thread(target=self.play_audio,args=(filename,))
             self.playing_theard.start()
-
-guiAUD = RecAUD()
+model_names = []
+for (paths, dirs, files) in os.walk("./"):
+    for filename in files:
+        if filename.endswith(".pkl") and filename != "kmeans.pkl":
+            model_names.append(filename)
+guiAUD = RecAUD(model_names)
