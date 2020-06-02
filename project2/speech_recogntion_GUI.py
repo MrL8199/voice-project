@@ -138,6 +138,8 @@ class RecAUD:
 
     def _onClickPlay(self):
         if self.is_playing == False:
+            if self.is_recording == True:
+                return
             self.play_btn['text'] = "Stop"
             self.play_btn['bg'] = "red"
             self.is_playing = True
@@ -179,6 +181,8 @@ class RecAUD:
         return y_trimmed, trimmed_length
 
     def remove_noise(self):
+        if self.is_recording == True:
+            return
         y,sr = librosa.load("record.wav")
         y_reduced_median = sp.signal.medfilt(y,3) # lọc trung vị
         y_reduced_median, time_trimmed = self.trim_silence(y_reduced_median)
