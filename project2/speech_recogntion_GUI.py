@@ -67,9 +67,20 @@ class RecAUD:
         self.status_label = tk.Label(self.BottomFrame, text = f"Đang sử dụng model {self.modelPath}")
         self.status_title.grid(row = 0, column = 0)
         self.status_label.grid(row = 1, column = 0)
-
+        self.main.bind_all('<Key>', self.on_key_press)
+        self.main.bind('<Return>', self.detect)
         tk.mainloop()
     
+    def on_key_press(self,event):
+        char = event.char
+        if char == ' ':
+            self._onClickRecord()
+        if char == 'p':
+            self._onClickPlay()
+        if char == 'r':
+            self.remove_noise()
+
+
     def get_mfcc(self,file_path):
         y, sr = librosa.load(file_path)  # read .wav file
         hop_length = math.floor(sr*0.010)  # 10ms hop
@@ -88,7 +99,7 @@ class RecAUD:
         # return T x 36 (transpose of X)
         return X.T  # hmmlearn use T x N matrix
     
-    def detect(self):
+    def detect(self,event=None):
         if self.is_playing == True:
             self.stop_play()
         
