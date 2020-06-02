@@ -80,7 +80,6 @@ class RecAUD:
         if char == 'r':
             self.remove_noise()
 
-
     def get_mfcc(self,file_path):
         y, sr = librosa.load(file_path)  # read .wav file
         hop_length = math.floor(sr*0.010)  # 10ms hop
@@ -101,7 +100,9 @@ class RecAUD:
     
     def detect(self,event=None):
         if self.is_playing == True:
+            self.is_playing = False
             self.stop_play()
+            return
         
         O = self.get_mfcc("record.wav")
         if self.modelPath == "multinomial_hmm.pkl":
