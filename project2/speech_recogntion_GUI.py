@@ -178,7 +178,7 @@ class RecAUD:
         return y_trimmed, trimmed_length
 
     def remove_noise(self):
-        if self.is_recording == True:
+        if self.is_playing or self.is_recording:
             return
         y,sr = librosa.load("record.wav")
         y_reduced_median = sp.signal.medfilt(y,3) # lọc trung vị
