@@ -99,11 +99,8 @@ class RecAUD:
         return X.T  # hmmlearn use T x N matrix
     
     def detect(self,event=None):
-        if self.is_playing == True:
-            self.is_playing = False
-            self.stop_play()
+        if self.is_playing or self.is_recording:
             return
-        
         O = self.get_mfcc("record.wav")
         if self.modelPath == "multinomial_hmm.pkl":
             O = self.kmeans.predict(O).reshape(-1, 1)
