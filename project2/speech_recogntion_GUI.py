@@ -19,7 +19,7 @@ class RecAUD:
         self.main = tk.Tk()
         self.collections = []
         self.main.geometry('800x300')
-        self.main.title('Project 2 - NguyenLinhUET - MSSV: 17021195')
+        self.main.title('Project 2')
         self.CHUNK = chunk
         self.FORMAT = frmat
         self.CHANNELS = channels
@@ -28,6 +28,7 @@ class RecAUD:
         self.frames = []
         self.st = 0
         self.is_playing = False
+        self.is_recording = False
         self.playing_theard = None
         self.modelPath = self.modelName[0]
         with open(self.modelPath, "rb") as file:
@@ -52,19 +53,14 @@ class RecAUD:
         self.modelPopup.grid(row=0,column=0, padx=50, pady=5)
 
         # Các phím record
-        self.strt_rec = tk.Button(self.MidFrame, width=10, text='Start Record', command=lambda: self.start_record())
-        self.stop_rec = tk.Button(self.MidFrame, width=10, text='Stop Record', command=lambda: self.stop_record())
-        self.play_au = tk.Button(self.MidFrame, width=10, text='Play', command=lambda: self.play_record())
-        self.stop_au = tk.Button(self.MidFrame, width=10, text="Stop", command=lambda: self.stop_play())
+        self.record_btn = tk.Button(self.MidFrame, width=10, text='Start Record', command=lambda: self._onClickRecord())
+        self.play_btn = tk.Button(self.MidFrame, width=10, text='Play', command=lambda: self._onClickPlay())
         self.rmv_noise = tk.Button(self.MidFrame, width=10, text="Rmv Noise", command=lambda: self.remove_noise())
-        self.detect_au = tk.Button(self.MidFrame, width=10, text="Detect", command=lambda: self.detect())
-
-        self.strt_rec.grid(row=1, column=0, pady = 5)
-        self.stop_rec.grid(row=1, column=1, pady = 5)
-        self.play_au.grid(row=1, column=3, pady = 5)
-        self.stop_au.grid(row=1, column=4, pady = 5)
-        self.rmv_noise.grid(row=1, column=5, pady = 5)
-        self.detect_au.grid(row=1, column=6, pady = 5)
+        self.detect_au = tk.Button(self.MidFrame, width=10, text="Predict", command=lambda: self.detect())
+        self.record_btn.grid(row=1, column=0, padx = 2 , pady = 5)
+        self.play_btn.grid(row=1, column=1, padx = 2, pady = 5)
+        self.rmv_noise.grid(row=1, column=2, padx = 2, pady = 5)
+        self.detect_au.grid(row=1, column=3, padx = 2 , pady = 5)
 
         # status
         self.status_title = tk.Label(self.BottomFrame, text = "Trạng thái:")
@@ -114,9 +110,33 @@ class RecAUD:
             self.kmeans = pickle.load(open("kmeans.pkl", 'rb'))
         self.status_label['text'] = f"Đang sử dụng model {self.modelPath}"
 
+    def _onClickRecord(self):
+        if self.is_recording == False:
+            if self.is_playing:
+                return
+            self.record_btn['text'] = "Stop record"
+            self.record_btn['bg'] = "red"
+            self.is_recording = True
+            self.start_record()
+        else:
+            self.record_btn['text'] = "Start record"
+            self.record_btn['bg'] = "SystemButtonFace"
+            self.is_recording = False
+            self.stop_record()
+
+    def _onClickPlay(self):
+        if self.is_playing == False:
+            self.play_btn['text'] = "Stop"
+            self.play_btn['bg'] = "red"
+            self.is_playing = True
+            self.play_record()
+        else:
+            self.play_btn['text'] = "Play"
+            self.play_btn['bg'] = "SystemButtonFace"
+            self.is_playing = False
+            self.stop_play()
 
     def start_record(self):
-        self.is_playing = False
         self.status_label['text'] = 'Đang ghi âm'
         self.st = 1
         self.frames = []
@@ -142,13 +162,13 @@ class RecAUD:
         self.status_label['text'] = 'Đã ghi âm'
 
     def trim_silence(self,y):
-        y_trimmed, index = librosa.effects.trim(y, top_db=20, frame_length=2, hop_length=500)
+        y_trimmed, index = librosa.effects.trim(y, top_db=25, frame_length=2, hop_length=500) 
         trimmed_length = librosa.get_duration(y) - librosa.get_duration(y_trimmed)
         return y_trimmed, trimmed_length
 
     def remove_noise(self):
         y,sr = librosa.load("record.wav")
-        y_reduced_median = sp.signal.medfilt(y,3)
+        y_reduced_median = sp.signal.medfilt(y,3) # lọc trung vị
         y_reduced_median, time_trimmed = self.trim_silence(y_reduced_median)
         sf.write('record.wav',y_reduced_median, sr, 'PCM_24')
         print(f"Remove noise: {librosa.get_duration(y)} (s) -> {librosa.get_duration(y_reduced_median)} (s)")
@@ -173,21 +193,20 @@ class RecAUD:
         stream.close()
         p.terminate()
         self.is_playing = False
+        self.play_btn['text'] = "Play"
+        self.play_btn['bg'] = "SystemButtonFace"
         self.status_label['text'] = "Dừng phát"
 
     def stop_play(self):
         if self.is_playing:
             self.status_label['text'] = "Dừng phát"
-            self.is_playing = False
             self.playing_theard.join()
 
     def play_record(self):
-        if not self.is_playing:
-            self.status_label['text'] = "Đang phát"
-            self.is_playing = True
-            filename = "record.wav"
-            self.playing_theard = threading.Thread(target=self.play_audio,args=(filename,))
-            self.playing_theard.start()
+        self.status_label['text'] = "Đang phát"
+        self.playing_theard = threading.Thread(target=self.play_audio,args=("record.wav",))
+        self.playing_theard.start()
+
 model_names = []
 for (paths, dirs, files) in os.walk("./"):
     for filename in files:
